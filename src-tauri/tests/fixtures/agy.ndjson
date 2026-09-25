@@ -1,0 +1,5 @@
+{"event": "init", "init": {"model": "gemini-3.8-flash-low"}}
+{"event": "step_update", "step_update": {"step_index": 0, "state": "DONE", "step_type": "user_input"}}
+{"event": "step_update", "step_update": {"step_index": 1, "state": "ACTIVE", "step_type": "agent_response", "text_delta": "Bonjour à tous."}}
+{"event": "step_update", "step_update": {"step_index": 1, "state": "DONE", "step_type": "agent_response", "text_delta": "\n", "duration_seconds": 3.253539, "usage": {"input_tokens": 12387, "output_tokens": 210, "thinking_tokens": 206, "cache_read_tokens": 0, "total_tokens": 12597}}}
+{"event": "result", "result": {"status": "SUCCESS", "response": "Bonjour à tous.\n", "duration_seconds": 3.287461, "num_turns": 1, "usage": {"input_tokens": 12387, "output_tokens": 210, "thinking_tokens": 206, "cache_read_tokens": 0, "total_tokens": 12597}}}
