@@ -695,10 +695,17 @@ export default function App() {
 
         <section>
           <h3>{t("workspace")}</h3>
-          <button className={`path ${workdir ? "" : "unset"}`} onClick={pickWorkdir} disabled={running} title={workdir}>
-            <Icon.Folder />
-            <span className="path-text">{workdir ? <bdi>{workdir}</bdi> : t("chooseFolder")}</span>
-          </button>
+          <div className="path-row">
+            <button className={`path ${workdir ? "" : "unset"}`} onClick={pickWorkdir} disabled={running} title={workdir}>
+              <Icon.Folder />
+              <span className="path-text">{workdir ? <bdi>{workdir}</bdi> : t("chooseFolder")}</span>
+            </button>
+            {workdir && (
+              <button className="icon-btn" onClick={() => setWorkdir("")} disabled={running} title={t("clearFolder")}>
+                <Icon.Close />
+              </button>
+            )}
+          </div>
           <h3 className="sub">{t("execMode")}</h3>
           <Segmented
             value={execMode}

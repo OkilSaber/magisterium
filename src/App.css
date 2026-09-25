@@ -589,6 +589,17 @@ input[type="number"] {
   text-align: left;
 }
 
+.path-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.path-row .path {
+  flex: 1;
+  min-width: 0;
+}
+
 .path-text {
   flex: 1;
   min-width: 0;

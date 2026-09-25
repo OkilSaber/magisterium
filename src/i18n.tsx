@@ -10,6 +10,7 @@ export const LANGS: { id: Lang; label: string }[] = [
 ];
 
 const fr = {
+  clearFolder: "Retirer le dossier",
   debateHeaderOne: "Le débat · {n} IA · 1 tour",
   verdict: "Verdict",
   deliberating: "Le conseil délibère…",
@@ -167,6 +168,7 @@ type Dict = typeof fr;
 export type TKey = keyof Dict;
 
 const en: Dict = {
+  clearFolder: "Remove folder",
   debateHeaderOne: "The debate · {n} AI · 1 round",
   verdict: "Verdict",
   deliberating: "The council is deliberating…",
@@ -321,6 +323,7 @@ const en: Dict = {
 };
 
 const es: Dict = {
+  clearFolder: "Quitar la carpeta",
   debateHeaderOne: "El debate · {n} IA · 1 ronda",
   verdict: "Veredicto",
   deliberating: "El consejo delibera…",
@@ -475,6 +478,7 @@ const es: Dict = {
 };
 
 const ar: Dict = {
+  clearFolder: "إزالة المجلد",
   debateHeaderOne: "النقاش · {n} ذكاء اصطناعي · جولة واحدة",
   verdict: "الحكم",
   deliberating: "المجلس يتداول…",
