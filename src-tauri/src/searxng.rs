@@ -30,16 +30,29 @@ impl Paths {
         Self { root }
     }
     fn uv(&self) -> PathBuf {
-        self.root.join("bin/uv")
+        self.root.join(if cfg!(windows) {
+            "bin/uv.exe"
+        } else {
+            "bin/uv"
+        })
     }
     fn python(&self) -> PathBuf {
-        self.root.join("python/bin/python3")
+        // Les builds Windows de python-build-standalone n'ont pas de dossier bin/.
+        self.root.join(if cfg!(windows) {
+            "python/python.exe"
+        } else {
+            "python/bin/python3"
+        })
     }
     fn src(&self) -> PathBuf {
         self.root.join("src")
     }
     fn venv_python(&self) -> PathBuf {
-        self.root.join("venv/bin/python")
+        self.root.join(if cfg!(windows) {
+            "venv/Scripts/python.exe"
+        } else {
+            "venv/bin/python"
+        })
     }
     fn settings(&self) -> PathBuf {
         self.root.join("settings.yml")
@@ -96,26 +109,33 @@ impl Progress {
 
 pub type OnProgress<'a> = &'a (dyn Fn(Progress) + Send + Sync);
 
-fn arch() -> &'static str {
-    if std::env::consts::ARCH == "x86_64" {
-        "x86_64"
-    } else {
-        "aarch64"
+/// Triplet Rust du système courant, tel qu'utilisé dans les noms des archives.
+fn triple() -> &'static str {
+    let arm = std::env::consts::ARCH == "aarch64";
+    match (std::env::consts::OS, arm) {
+        ("macos", true) => "aarch64-apple-darwin",
+        ("macos", false) => "x86_64-apple-darwin",
+        ("windows", true) => "aarch64-pc-windows-msvc",
+        ("windows", false) => "x86_64-pc-windows-msvc",
+        (_, true) => "aarch64-unknown-linux-gnu",
+        (_, false) => "x86_64-unknown-linux-gnu",
     }
 }
 
 fn uv_url() -> String {
+    // uv est distribué en .zip sous Windows, en .tar.gz ailleurs.
+    let ext = if cfg!(windows) { "zip" } else { "tar.gz" };
     format!(
-        "https://github.com/astral-sh/uv/releases/download/{UV_VERSION}/uv-{}-apple-darwin.tar.gz",
-        arch()
+        "https://github.com/astral-sh/uv/releases/download/{UV_VERSION}/uv-{}.{ext}",
+        triple()
     )
 }
 
 fn python_url() -> String {
     format!(
         "https://github.com/astral-sh/python-build-standalone/releases/download/{PYTHON_BUILD}/\
-         cpython-{PYTHON_VERSION}%2B{PYTHON_BUILD}-{}-apple-darwin-install_only.tar.gz",
-        arch()
+         cpython-{PYTHON_VERSION}%2B{PYTHON_BUILD}-{}-install_only.tar.gz",
+        triple()
     )
 }
 
@@ -206,7 +226,12 @@ async fn fetch_archive(
 ) -> Result<(), String> {
     let downloads = dest.parent().unwrap_or(dest).join("downloads");
     std::fs::create_dir_all(&downloads).map_err(|e| e.to_string())?;
-    let file_path = downloads.join(format!("step-{index}.tar.gz"));
+    let ext = if url.ends_with(".zip") {
+        "zip"
+    } else {
+        "tar.gz"
+    };
+    let file_path = downloads.join(format!("step-{index}.{ext}"));
 
     let resp = reqwest::Client::new()
         .get(url)
@@ -249,6 +274,9 @@ async fn fetch_archive(
 }
 
 fn extract(archive: &Path, dest: &Path) -> Result<(), String> {
+    if archive.extension().is_some_and(|e| e == "zip") {
+        return extract_zip(archive, dest);
+    }
     let file = std::fs::File::open(archive).map_err(|e| e.to_string())?;
     let mut tar = tar::Archive::new(flate2::read::GzDecoder::new(file));
     std::fs::create_dir_all(dest).map_err(|e| e.to_string())?;
@@ -270,6 +298,15 @@ fn extract(archive: &Path, dest: &Path) -> Result<(), String> {
             .map_err(|e| format!("Extraction impossible : {e}"))?;
     }
     Ok(())
+}
+
+/// Les .zip d'uv n'ont pas de dossier racine : on extrait tel quel.
+fn extract_zip(archive: &Path, dest: &Path) -> Result<(), String> {
+    let file = std::fs::File::open(archive).map_err(|e| e.to_string())?;
+    let mut zip = zip::ZipArchive::new(file).map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(dest).map_err(|e| e.to_string())?;
+    zip.extract(dest)
+        .map_err(|e| format!("Extraction impossible : {e}"))
 }
 
 /// Environnement d'uv confiné au dossier de l'app (ni cache ni Python de l'utilisateur).
@@ -505,8 +542,9 @@ mod tests {
 
     #[test]
     fn download_urls_match_the_architecture() {
-        assert!(uv_url().ends_with(&format!("uv-{}-apple-darwin.tar.gz", arch())));
+        assert!(uv_url().contains(&format!("uv-{}.", triple())));
         assert!(python_url().contains("cpython-3.12.14%2B20260924"));
+        assert!(python_url().ends_with(&format!("{}-install_only.tar.gz", triple())));
         assert!(searxng_url().ends_with(&format!("{SEARXNG_SHA}.tar.gz")));
     }
 

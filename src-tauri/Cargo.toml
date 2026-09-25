@@ -30,11 +30,11 @@ which = "8.0.6"
 tauri-plugin-dialog = "2.7.3"
 reqwest = { version = "0.13.5", default-features = false, features = ["json", "stream", "rustls"] }
 window-vibrancy = "0.8.1"
-keyring = { version = "3", features = ["apple-native"] }
 scraper = "0.27.0"
 flate2 = "1.1.10"
 tar = "0.4.46"
 tauri-plugin-opener = "2.5.5"
+zip = { version = "8.6.0", default-features = false, features = ["deflate"] }
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
@@ -44,3 +44,14 @@ lto = true
 opt-level = 3
 panic = "abort"
 strip = true
+
+# Coffre de clés natif de chaque système : Trousseau (macOS), Gestionnaire
+# d'identifiants (Windows), Secret Service / GNOME Keyring / KWallet (Linux).
+[target.'cfg(target_os = "macos")'.dependencies]
+keyring = { version = "3", features = ["apple-native"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+keyring = { version = "3", features = ["windows-native"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+keyring = { version = "3", features = ["sync-secret-service", "crypto-rust"] }

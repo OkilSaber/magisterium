@@ -23,7 +23,7 @@ pub async fn detect() -> Option<ProviderInfo> {
 }
 
 fn command(model: &str, effort: &str, ctx: &RunCtx<'_>) -> Command {
-    let mut cmd = Command::new("claude");
+    let mut cmd = Command::new(cli::program("claude"));
     cmd.args([
         "-p",
         "--output-format",

@@ -1,6 +1,6 @@
 use crate::prompts;
 use crate::providers::{self, Backend, Chunk, ExecMode, RunCtx};
-use crate::tools::WebTools;
+use crate::tools::ModelTools;
 use futures_util::future::join_all;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -115,7 +115,7 @@ fn default_lang() -> String {
 pub async fn execute(
     cfg: RunConfig,
     backends: &HashMap<String, Backend>,
-    web: Option<&WebTools>,
+    web: Option<&ModelTools>,
     emit: Emit<'_>,
 ) {
     let workdir = PathBuf::from(&cfg.workdir);

@@ -3,6 +3,14 @@ use std::process::Stdio;
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
 
+/// Chemin complet d'une CLI : sous Windows, `claude` est un `claude.cmd` que
+/// `Command::new("claude")` ne trouverait pas.
+pub fn program(name: &str) -> std::ffi::OsString {
+    which::which(name)
+        .map(|p| p.into_os_string())
+        .unwrap_or_else(|_| name.into())
+}
+
 /// Interprétation d'une ligne NDJSON émise par une CLI d'agent.
 #[derive(Debug, PartialEq)]
 pub enum Line {
@@ -73,6 +81,16 @@ pub async fn run(
     let stderr = stderr_task.await.unwrap_or_default();
 
     match final_result {
+        // Une CLI peut « réussir » sans rien écrire (outil refusé, par exemple) :
+        // c'est une erreur, avec l'explication qu'elle a laissée sur stderr.
+        Some(Ok(text)) if text.trim().is_empty() && streamed.trim().is_empty() => {
+            let detail = stderr.trim();
+            Err(if detail.is_empty() {
+                format!("`{program}` n'a produit aucune réponse")
+            } else {
+                format!("`{program}` : {detail}")
+            })
+        }
         Some(result) => result,
         None if status.success() && !streamed.is_empty() => Ok(streamed),
         None => {

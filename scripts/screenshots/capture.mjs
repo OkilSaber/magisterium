@@ -73,7 +73,7 @@ async function open(scene = "") {
 await open();
 await shot("empty");
 await click(".conv-item");
-await page.waitForSelector(".turn:nth-of-type(2) .columns");
+await page.waitForSelector(".turn:nth-of-type(2) .members");
 await page.evaluate(() => {
   document.querySelector(".turn:last-of-type .user-prompt")?.scrollIntoView({ block: "start" });
   document.querySelector(".thread")?.scrollBy(0, -12);
@@ -82,20 +82,39 @@ await shot("council");
 
 // 1 bis. Tour initial : DeepSeek (API) cherche sur le web et montre son raisonnement.
 await page.evaluate(() => {
-  const tab = document.querySelector(".turn:last-of-type .tabs button");
-  if (tab instanceof HTMLElement) tab.click();
+  const round = document.querySelector(".turn:last-of-type .tabs button");
+  if (round instanceof HTMLElement) round.click();
 });
-await settle(300);
+await settle(200);
 await page.evaluate(() => {
-  document.querySelector(".turn:last-of-type .user-prompt")?.scrollIntoView({ block: "start" });
-  document.querySelector(".thread")?.scrollBy(0, -12);
+  const tab = [...document.querySelectorAll(".turn:last-of-type .member-tab")].find((b) => b.textContent?.includes("OpenRouter"));
+  if (tab instanceof HTMLElement) tab.click();
+  document.querySelector(".turn:last-of-type .debate")?.scrollIntoView({ block: "start" });
+  document.querySelector(".thread")?.scrollBy(0, -60);
 });
 await shot("web-tools");
 
-// 2. Lecture façon chat : débats repliés, seules les synthèses restent.
+// 1 ter. Vue côte à côte, pour comparer les réponses.
 await page.evaluate(() => {
-  const toggle = document.querySelector(".turn:last-of-type .toggle");
+  const toggle = document.querySelector(".turn:last-of-type .layout-toggle");
   if (toggle instanceof HTMLElement) toggle.click();
+});
+await settle(200);
+await page.evaluate(() => {
+  document.querySelector(".turn:last-of-type .debate")?.scrollIntoView({ block: "start" });
+  document.querySelector(".thread")?.scrollBy(0, -60);
+});
+await shot("side-by-side");
+// Revient à la vue par défaut pour les captures suivantes.
+await page.evaluate(() => {
+  document.querySelector(".turn:last-of-type .layout-toggle")?.click();
+  localStorage.setItem("turn.layout", "tabs");
+});
+
+// 2. Lecture façon chat : débats repliés, seuls les verdicts restent.
+await page.evaluate(() => {
+  const head = document.querySelector(".turn:last-of-type .debate-head");
+  if (head instanceof HTMLElement) head.click();
   document.querySelector(".thread")?.scrollTo(0, 0);
 });
 await shot("thread");
@@ -107,6 +126,14 @@ await page.$$eval(".topbar .icon-btn", (buttons) => {
 });
 await settle(500);
 await shot("focus");
+
+// 2 bis. Un tour en direct : le débat avance, le verdict attend.
+await open();
+await page.type(".composer textarea", "Can SQLite really handle production traffic?");
+await page.$eval(".composer .send", (el) => el.click());
+await page.waitForSelector(".verdict-pending");
+await settle(900);
+await shot("live");
 
 // 3 bis. Limites d'usage.
 await open();

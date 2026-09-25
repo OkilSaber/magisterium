@@ -50,7 +50,9 @@ function modelLabel(t: T, m: { id: string; label: string; loaded?: boolean }) {
 function labelFor(t: T, providers: ProviderInfo[], s: { provider: ProviderId; model: string }) {
   const p = providers.find((x) => x.id === s.provider);
   const m = p?.models.find((x) => x.id === s.model);
-  return `${p?.name ?? s.provider} · ${m ? modelLabel(t, m) : s.model || t("modelDefault")}`;
+  // Nom stable dans l'historique : sans le marqueur « chargé » de la liste.
+  const model = m ? (m.id === "" ? t("modelDefault") : m.label) : s.model || t("modelDefault");
+  return `${p?.name ?? s.provider} · ${model}`;
 }
 
 /// Libellés uniques, même si le même modèle est ajouté deux fois.
@@ -424,6 +426,10 @@ export default function App() {
     }
   }
 
+  const colorFor = (id: ProviderId) => {
+    const p = providers.find((x) => x.id === id);
+    return !p || p.preset === "cli" ? "#a48bff" : presetById(p.preset).color;
+  };
   const running = runId !== null;
   const webReady =
     !!webConfig &&
@@ -503,7 +509,7 @@ export default function App() {
         <div className="thread">
           <div className="thread-inner">
             {conv?.turns.map((t, i) => (
-              <TurnView key={t.id} turn={t} isLast={i === conv.turns.length - 1} />
+              <TurnView key={t.id} turn={t} isLast={i === conv.turns.length - 1} colorFor={colorFor} />
             ))}
             {!conv && (
               <div className="empty">

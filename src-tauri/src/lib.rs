@@ -34,6 +34,15 @@ pub fn run() {
                 }
             }
 
+            // Windows 11 : matériau Mica, l'équivalent du verre dépoli de macOS.
+            #[cfg(target_os = "windows")]
+            {
+                use tauri::Manager;
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window_vibrancy::apply_mica(&window, Some(true));
+                }
+            }
+
             // SearXNG intégré : démarré seulement s'il a été installé ET activé.
             let handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {

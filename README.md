@@ -12,6 +12,7 @@
 
 <p align="center">
   <img alt="macOS" src="https://img.shields.io/badge/macOS-Apple%20Silicon-111?logo=apple&logoColor=white" />
+  <img alt="Linux and Windows" src="https://img.shields.io/badge/Linux%20·%20Windows-experimental-555" />
   <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-24C8DB?logo=tauri&logoColor=white" />
   <img alt="Rust" src="https://img.shields.io/badge/Rust-backend-B7410E?logo=rust&logoColor=white" />
   <img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black" />
@@ -20,7 +21,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/council.png" alt="Three AIs cross-reviewing each other, followed by the council's synthesis" />
+  <img src="docs/screenshots/council.png" alt="The council's verdict on top, then each AI's answer one tab at a time" />
 </p>
 
 ---
@@ -49,7 +50,9 @@ In practice it catches the stuff a single model gets confidently wrong: an outda
 - 🧠 **Per-model control.** Pick the model and the **thinking effort** (low → max for Claude) for each member. Add the same provider twice with different models if you like.
 - 🌐 **Web access for every model.** API and local models get `web_search` and `fetch_url` tools, executed by the app. Search runs through a **built-in SearXNG**, Tavily, or your own SearXNG instance.
 - 📊 **Usage limits at a glance.** Claude Code and Antigravity 5-hour and weekly windows, OpenRouter and DeepSeek balances, Tavily credits, each with a reset countdown. A mini gauge on every council member warns you before you hit a wall. Checking is free: no tokens spent.
-- 👀 **See them think.** Answers stream live. Reasoning (when the provider exposes it), searches and pages read appear inside each card.
+- 👀 **See them think.** Answers stream live. Reasoning (when the provider exposes it), searches, pages and files read appear with each answer.
+- 🏛️ **Verdict first.** Each turn opens on the council's verdict. The debate sits right below: one tab per AI with its full-width answer, or a side-by-side view to compare.
+- 📁 **Your project, for every model.** Pick a workspace folder: CLI agents work in it with their own tools, and API or local models get read-only `list_dir`, `read_file` and `search_files` tools, confined to that folder.
 - 🛡️ **Execution modes for agents**: *Plan* (read-only), *Edit*, *Auto*, *Full access*, applied to the CLI agents working in your project folder.
 - 🍏 **Native feel.** Liquid-glass UI on real macOS vibrancy, collapsible side panels (`⌘B` / `⌘J`), and animations tuned with Emil Kowalski's and Apple's motion principles. Reduced-motion and reduced-transparency are respected.
 - 🌍 **Four languages**: English, Français, Español, العربية (right-to-left). The instructions sent to the models follow the UI language too.
@@ -71,6 +74,10 @@ flowchart LR
 ## Screenshots
 
 <table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/live.png" alt="A turn in progress" /><br /><sub><b>Live deliberation:</b> answers stream in while the verdict waits for the debate to finish.</sub></td>
+    <td width="50%"><img src="docs/screenshots/side-by-side.png" alt="Answers side by side" /><br /><sub><b>Side by side:</b> equal-size cards that scroll horizontally, to compare every answer at a glance.</sub></td>
+  </tr>
   <tr>
     <td width="50%"><img src="docs/screenshots/web-tools.png" alt="A model searching the web and showing its reasoning" /><br /><sub><b>Web tools & reasoning:</b> an API model searches, reads a page, and shows its chain of thought.</sub></td>
     <td width="50%"><img src="docs/screenshots/thread.png" alt="Discussion with debates collapsed" /><br /><sub><b>Threaded discussions:</b> collapse the debates and read it like a chat, one verdict per turn.</sub></td>
@@ -116,7 +123,7 @@ Models reached through an API don't browse by themselves: the app gives them two
 
 ## Execution modes
 
-These apply to the CLI agents, which can read and edit files in the workspace folder you choose. API models only answer.
+These apply to the CLI agents, which can read and edit files in the workspace folder you choose. API and local models can only **read** that folder.
 
 | Mode | Claude Code CLI | Antigravity CLI |
 | --- | --- | --- |
@@ -146,8 +153,27 @@ Requirements: [Rust](https://rustup.rs) and Node.js 20+.
 
 ```bash
 npm install
-npm run tauri dev                       # development
-npm run tauri build -- --bundles dmg    # release DMG
+npm run tauri dev        # development
+```
+
+Release builds run on the target system (Tauri doesn't cross-compile desktop apps):
+
+| System | Command | Output |
+| --- | --- | --- |
+| macOS | `scripts/build-macos.sh` (`--universal` for Apple Silicon + Intel) | `.app`, `.dmg` |
+| Linux | `scripts/build-linux.sh` (`--bundles deb` to pick formats) | `.deb`, `.rpm`, `.AppImage` |
+| Windows | `.\scripts\build-windows.ps1` (`-Bundles nsis` to pick) | `.msi`, `-setup.exe` |
+
+Each script checks its prerequisites first (Xcode tools, WebKitGTK and D-Bus headers, MSVC Build Tools) and prints the install command if something is missing. Shortcuts: `npm run build:mac`, `build:linux`, `build:win`.
+
+Clean up build artifacts (≈ 10 GB after a few builds). App data (discussions, providers, keys) is never touched:
+
+```bash
+scripts/clean.sh             # dist/, src-tauri/target/, src-tauri/gen/
+scripts/clean.sh --bundles   # only the produced packages
+scripts/clean.sh --all       # also node_modules/
+scripts/clean.sh --dry-run   # show what would be removed
+.\scripts\clean.ps1 -DryRun  # Windows equivalent (-Bundles, -All)
 ```
 
 Tests:
@@ -184,13 +210,17 @@ src-tauri/src/            Rust back-end
 scripts/screenshots/      mocked backend + capture script for this README
 ```
 
+## Platforms
+
+**macOS** is where Magisterium is built and tested every day. **Linux and Windows** builds are wired up (native keychains, Mica on Windows 11, SearXNG binaries per platform, `.cmd` CLI shims), but they haven't been run on real machines yet. Reports welcome.
+
 ## Roadmap
 
 - Web tools for Anthropic-protocol providers
 - Signed and notarized builds (Touch ID for the Keychain, no Gatekeeper prompt)
 - OAuth providers (GitHub Copilot, ChatGPT subscription)
 - Export a discussion to Markdown
-- Windows and Linux builds
+- Tested Linux and Windows releases
 
 ## License
 

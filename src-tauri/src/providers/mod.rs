@@ -1,12 +1,12 @@
 pub mod anthropic;
 pub mod antigravity;
 pub mod claude;
-mod cli;
+pub mod cli;
 pub mod openai_compat;
 mod sse;
 
 use crate::config::{self, ApiKind, ProviderConfig};
-use crate::tools::WebTools;
+use crate::tools::ModelTools;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use tauri::AppHandle;
@@ -79,7 +79,7 @@ pub struct RunCtx<'a> {
     pub workdir: &'a Path,
     pub mode: ExecMode,
     /// Outils web proposés aux modèles API (les CLI ont les leurs).
-    pub web: Option<&'a WebTools>,
+    pub web: Option<&'a ModelTools>,
 }
 
 /// Morceau reçu au fil du streaming : la réponse, ou le raisonnement du modèle

@@ -85,7 +85,7 @@ async fn run_cli(mut cmd: Command) -> Result<String, String> {
 }
 
 pub async fn claude() -> Result<Vec<Meter>, String> {
-    let mut cmd = Command::new("claude");
+    let mut cmd = Command::new(crate::providers::cli::program("claude"));
     cmd.args(["-p", "--output-format", "json"])
         .env_remove("CLAUDECODE")
         .current_dir(std::env::temp_dir())
@@ -124,7 +124,7 @@ fn parse_claude(text: &str) -> Vec<Meter> {
 }
 
 pub async fn antigravity() -> Result<Vec<Meter>, String> {
-    let mut cmd = Command::new("agy");
+    let mut cmd = Command::new(crate::providers::cli::program("agy"));
     cmd.args(["--output-format", "stream-json", "-p=/usage"])
         .current_dir(std::env::temp_dir());
     let raw = run_cli(cmd).await?;

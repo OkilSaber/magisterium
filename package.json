@@ -9,7 +9,12 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "screenshots": "node scripts/screenshots/capture.mjs"
+    "screenshots": "node scripts/screenshots/capture.mjs",
+    "build:mac": "bash scripts/build-macos.sh",
+    "build:linux": "bash scripts/build-linux.sh",
+    "build:win": "powershell -ExecutionPolicy Bypass -File scripts/build-windows.ps1",
+    "clean": "bash scripts/clean.sh",
+    "clean:win": "powershell -ExecutionPolicy Bypass -File scripts/clean.ps1"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

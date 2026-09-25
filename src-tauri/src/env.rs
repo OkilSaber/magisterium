@@ -2,13 +2,28 @@ use std::process::{Command, Stdio};
 
 const MARKER: &str = "__MAGISTERIUM_PATH__";
 
-/// Une app lancée depuis le Finder n'hérite pas du PATH du shell (nvm, asdf,
-/// ~/.local/bin…) : on le récupère depuis un zsh interactif pour trouver
-/// `claude`, `agy`, `lms`, `ollama`.
+/// Sous Windows, une app hérite du PATH système : rien à faire.
+#[cfg(windows)]
+pub fn init_path() {}
+
+/// Une app lancée depuis le Finder ou le menu du bureau n'hérite pas du PATH du
+/// shell (nvm, asdf, ~/.local/bin…) : on le récupère depuis un shell interactif
+/// pour trouver `claude`, `agy`, `lms`, `ollama`.
+#[cfg(unix)]
 pub fn init_path() {
     let home = std::env::var("HOME").unwrap_or_default();
+    let shell = std::env::var("SHELL")
+        .ok()
+        .filter(|s| std::path::Path::new(s).exists())
+        .unwrap_or_else(|| {
+            if std::path::Path::new("/bin/zsh").exists() {
+                "/bin/zsh".into()
+            } else {
+                "/bin/sh".into()
+            }
+        });
 
-    let shell_path = Command::new("/bin/zsh")
+    let shell_path = Command::new(&shell)
         .args(["-ilc", &format!("printf '{MARKER}%s{MARKER}' \"$PATH\"")])
         .stdin(Stdio::null())
         .stderr(Stdio::null())
@@ -31,12 +46,15 @@ pub fn init_path() {
         .map(String::from)
         .collect();
 
-    for extra in [
+    let mut extras = vec![
         format!("{home}/.local/bin"),
         format!("{home}/.lmstudio/bin"),
-        "/opt/homebrew/bin".to_string(),
-        "/usr/local/bin".to_string(),
-    ] {
+    ];
+    if cfg!(target_os = "macos") {
+        extras.push("/opt/homebrew/bin".into());
+    }
+    extras.push("/usr/local/bin".into());
+    for extra in extras {
         if !parts.contains(&extra) {
             parts.push(extra);
         }

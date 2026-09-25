@@ -3,7 +3,7 @@ use crate::history;
 use crate::orchestrator::{self, RunConfig, RunEvent};
 use crate::providers::{self, ModelInfo, ProviderInfo};
 use crate::searxng::{self, SearxngState};
-use crate::tools::{self, WebTools};
+use crate::tools::{self, ModelTools};
 use crate::usage;
 use std::collections::HashMap;
 use std::path::Path;
@@ -73,7 +73,8 @@ pub fn start_run(
         return Err("Choisis au moins une IA".into());
     }
     // Sans dossier choisi, les agents travaillent dans un dossier temporaire.
-    if config.workdir.trim().is_empty() {
+    let has_workspace = !config.workdir.trim().is_empty();
+    if !has_workspace {
         let scratch = std::env::temp_dir().join("magisterium");
         std::fs::create_dir_all(&scratch).map_err(|e| e.to_string())?;
         config.workdir = scratch.to_string_lossy().into_owned();
@@ -96,14 +97,23 @@ pub fn start_run(
         }
     }
 
-    let web = config.web.then(|| WebTools {
-        engine: config::search_engine(
-            &config::load_web(&app),
-            None,
-            app.state::<SearxngState>().port(),
-        ),
+    // Outils des modèles API : le web s'il est activé, et la lecture du dossier de
+    // travail si l'utilisateur en a choisi un (pas le dossier temporaire).
+    let tools = ModelTools {
+        web: config.web,
+        engine: if config.web {
+            config::search_engine(
+                &config::load_web(&app),
+                None,
+                app.state::<SearxngState>().port(),
+            )
+        } else {
+            None
+        },
+        workspace: has_workspace.then(|| std::path::PathBuf::from(&config.workdir)),
         today: config.today.clone(),
-    });
+    };
+    let web = (!tools.is_empty()).then_some(tools);
 
     let run_id = uuid::Uuid::new_v4().to_string();
     let token = CancellationToken::new();

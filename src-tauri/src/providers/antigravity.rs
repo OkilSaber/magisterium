@@ -27,7 +27,7 @@ pub async fn detect() -> Option<ProviderInfo> {
 async fn list_models() -> Result<Vec<ModelInfo>, String> {
     let output = tokio::time::timeout(
         Duration::from_secs(20),
-        Command::new("agy")
+        Command::new(cli::program("agy"))
             .arg("models")
             .kill_on_drop(true)
             .output(),
@@ -47,8 +47,12 @@ fn parse_models(stdout: &str) -> Vec<ModelInfo> {
         .collect()
 }
 
+const EDIT_MODE_HINT: &str = "[Environment note: shell commands (run_command) are not \
+    permitted in this session and will be denied. To explore or change the workspace, use \
+    your file tools instead (list_dir, view_file, grep_search, file editing tools).]";
+
 fn command(model: &str, prompt: &str, ctx: &RunCtx<'_>) -> Command {
-    let mut cmd = Command::new("agy");
+    let mut cmd = Command::new(cli::program("agy"));
     cmd.args(["--output-format", "stream-json"]);
     if !model.is_empty() {
         cmd.args(["--model", model]);
@@ -58,6 +62,12 @@ fn command(model: &str, prompt: &str, ctx: &RunCtx<'_>) -> Command {
         // Antigravity n'a pas de mode auto : on reste sur l'édition acceptée.
         ExecMode::Edit | ExecMode::Auto => cmd.args(["--mode", "accept-edits"]),
         ExecMode::Full => cmd.arg("--dangerously-skip-permissions"),
+    };
+    // En mode édition, les commandes shell sont refusées d'office (personne ne peut
+    // les valider) et Antigravity abandonne : on l'oriente vers ses outils de fichiers.
+    let prompt = match ctx.mode {
+        ExecMode::Edit | ExecMode::Auto => format!("{EDIT_MODE_HINT}\n\n{prompt}"),
+        _ => prompt.to_string(),
     };
     // `agy` ne lit pas le prompt sur stdin : il doit être collé au flag.
     cmd.arg(format!("-p={prompt}")).current_dir(ctx.workdir);

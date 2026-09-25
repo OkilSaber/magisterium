@@ -3,7 +3,7 @@
 
 use super::sse::{self, Sse};
 use super::{Chunk, ModelInfo, Sink};
-use crate::tools::WebTools;
+use crate::tools::ModelTools;
 use serde_json::{json, Value};
 use std::time::Duration;
 
@@ -67,7 +67,7 @@ pub async fn stream_chat(
     key: Option<&str>,
     model: &str,
     prompt: &str,
-    tools: Option<&WebTools>,
+    tools: Option<&ModelTools>,
     on_delta: Sink<'_>,
 ) -> Result<String, String> {
     let mut messages = Vec::new();
@@ -134,6 +134,7 @@ fn tool_detail(arguments: &str) -> String {
     args["query"]
         .as_str()
         .or_else(|| args["url"].as_str())
+        .or_else(|| args["path"].as_str())
         .unwrap_or_default()
         .to_string()
 }
@@ -382,13 +383,15 @@ mod live {
 #[cfg(test)]
 mod live_tools {
     use crate::providers::Chunk;
-    use crate::tools::WebTools;
+    use crate::tools::ModelTools;
 
     /// LM Studio local + un modèle qui sait appeler des outils : il doit lire la page.
     #[tokio::test]
     #[ignore]
     async fn live_fetch_url_tool() {
-        let tools = WebTools {
+        let tools = ModelTools {
+            web: true,
+            workspace: None,
             engine: None,
             today: "2026-09-25".into(),
         };
@@ -407,5 +410,43 @@ mod live_tools {
         )
         .await;
         println!("RÉPONSE {r:?}");
+    }
+}
+
+#[cfg(test)]
+mod live_workspace {
+    use crate::providers::Chunk;
+    use crate::tools::ModelTools;
+
+    /// LM Studio local : le modèle doit explorer le dossier au lieu de demander le code.
+    #[tokio::test]
+    #[ignore]
+    async fn live_workspace_tools() {
+        let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..");
+        let tools = ModelTools {
+            web: false,
+            engine: None,
+            workspace: Some(root),
+            today: "2026-09-25".into(),
+        };
+        let on = |c: Chunk<'_>| {
+            if let Chunk::Tool { name, detail } = c {
+                println!("OUTIL {name} {detail}");
+            }
+        };
+        let r = super::stream_chat(
+            "http://localhost:1234/v1",
+            None,
+            "essentialai/rnj-1",
+            "Fais moi un résumé en 3 lignes de ce repo.",
+            Some(&tools),
+            &on,
+        )
+        .await;
+        println!(
+            "RÉPONSE {}",
+            r.map(|t| t.chars().take(400).collect::<String>())
+                .unwrap_or_else(|e| e)
+        );
     }
 }

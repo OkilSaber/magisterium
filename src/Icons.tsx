@@ -69,6 +69,13 @@ export const Sparkle = () => (
   </svg>
 );
 
+export const Search = () => (
+  <svg {...base} width={12} height={12} strokeWidth={2.2}>
+    <circle cx="11" cy="11" r="6.5" />
+    <path d="M20 20l-4.2-4.2" />
+  </svg>
+);
+
 export const Gauge = () => (
   <svg {...base}>
     <path d="M4.5 16.5a8 8 0 1 1 15 0" />
