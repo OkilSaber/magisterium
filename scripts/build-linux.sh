@@ -57,6 +57,10 @@ if [[ $FRESH == 1 || ! -d node_modules ]]; then
   npm ci
 fi
 
+# linuxdeploy embarque un binaire `strip` plus ancien qui échoue sur les distributions
+# récentes (Arch, CachyOS, Fedora...) utilisant les relocations `.relr.dyn`.
+export NO_STRIP="${NO_STRIP:-1}"
+
 step "Compilation (quelques minutes la première fois)"
 npm run tauri build -- --bundles "$BUNDLES"
 
