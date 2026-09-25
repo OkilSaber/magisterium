@@ -6,7 +6,11 @@ import { openUrl, revealItemInDir } from "@tauri-apps/plugin-opener";
 
 // Les feux tricolores de macOS se posent sur l'interface : on leur réserve de la
 // place seulement sur Mac (ailleurs, la barre de titre est native).
-document.documentElement.classList.add(navigator.userAgent.includes("Mac") ? "platform-mac" : "platform-other");
+const ua = navigator.userAgent;
+document.documentElement.classList.add(
+  ua.includes("Mac") ? "platform-mac" : "platform-other",
+  ...(ua.includes("Linux") ? ["platform-linux"] : []),
+);
 
 // Un lien ne doit jamais remplacer l'app dans la fenêtre : le web part dans le
 // navigateur par défaut, un fichier local s'affiche dans le Finder.

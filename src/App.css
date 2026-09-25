@@ -2081,3 +2081,47 @@ input[type="number"] {
 .platform-mac .brand {
   padding-top: 40px;
 }
+
+/* Sans verre natif derrière la fenêtre (Linux, Windows sans Mica), le ciel de
+   nuit doit être opaque : sinon on voit le bureau à travers l'app. */
+.platform-other body {
+  background: #0b0918;
+}
+
+.platform-other .backdrop {
+  background:
+    radial-gradient(60% 50% at 12% 8%, rgba(124, 92, 255, 0.34), transparent 70%),
+    radial-gradient(45% 45% at 92% 18%, rgba(64, 120, 255, 0.22), transparent 70%),
+    radial-gradient(55% 45% at 55% 108%, rgba(242, 164, 80, 0.2), transparent 70%),
+    radial-gradient(40% 35% at 30% 70%, rgba(200, 80, 200, 0.12), transparent 70%),
+    linear-gradient(180deg, #1a1540 0%, #0e0b1f 60%, #0a0816 100%);
+}
+
+/* WebKitGTK dessine les <select> avec le thème GTK (souvent fond clair) tout en
+   gardant notre texte clair : on les dessine nous-mêmes hors de macOS. */
+.platform-other {
+  color-scheme: dark;
+}
+
+.platform-other select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: rgba(0, 0, 0, 0.28);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23b9b3d6' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+  color: var(--text);
+}
+
+[dir="rtl"].platform-other select {
+  background-position: left 10px center;
+  padding-right: 10px;
+  padding-left: 30px;
+}
+
+.platform-other option,
+.platform-other optgroup {
+  background-color: #1c1734;
+  color: #ece9f7;
+}
